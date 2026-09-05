@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BK Videos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f8fafc; color: #0f172a; font-family: sans-serif; }
+        .card-border-blue { border: 2px solid #06b6d4; }
+        .card-border-red { border: 2px solid #ef4444; }
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="border-2 border-black rounded-xl px-4 py-1 font-bold text-xl">BK</div>
+        <button class="text-gray-500 text-xl"><i class="fas fa-search"></i></button>
+    </div>
+
+    <!-- Sección Videos -->
+    <h2 class="text-2xl font-bold mb-4">videos -</h2>
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        
+        <!-- Tarjeta 1 -->
+        <div class="bg-black text-white rounded-2xl p-3 relative card-border-blue flex flex-col justify-between h-48">
+            <span class="bg-cyan-500 text-xs font-bold px-2 py-0.5 rounded-md w-max text-white">VIDEO</span>
+            <div>
+                <p class="font-bold text-sm">Video Nuevo</p>
+                <p class="text-xs text-gray-400">1 vista • Reciente</p>
+            </div>
+        </div>
+
+        <!-- Tarjeta 2 -->
+        <div class="bg-black text-white rounded-2xl p-3 relative card-border-blue flex flex-col justify-between h-48">
+            <span class="bg-cyan-500 text-xs font-bold px-2 py-0.5 rounded-md w-max text-white">VIDEO</span>
+            <div>
+                <p class="font-bold text-sm">Lanzamiento oficial de BK 🚀</p>
+                <p class="text-xs text-gray-400">12.4k vistas</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Sección Lives -->
+    <h2 class="text-2xl font-bold mb-4">Lives -</h2>
+    <div class="grid grid-cols-2 gap-4 mb-20">
+        
+        <!-- Live Tarjeta -->
+        <div class="bg-black text-white rounded-2xl p-3 relative card-border-red flex flex-col justify-between h-56">
+            <span class="bg-red-500 text-xs font-bold px-2 py-0.5 rounded-md w-max text-white flex items-center gap-1">
+                <span class="w-2 h-2 bg-white rounded-full"></span> LIVE
+            </span>
+            <div>
+                <p class="font-bold text-sm">🔴 DJ Set Space en vivo</p>
+                <p class="text-xs text-gray-400">2.1k espectando</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Botón Flotante Plus -->
+    <div class="fixed bottom-6 right-6">
+        <button class="bg-cyan-400 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg">
+            +
+        </button>
+    </div>
+
+</body>
+</html>
