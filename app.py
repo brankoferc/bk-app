@@ -1,27 +1,4 @@
-import os
-from flask import Flask, render_template_string, request, redirect, url_for
-
-app = Flask(__name__)
-
-VIDEOS = [
-    {
-        'id': 1,
-        'title': 'Video Nuevo',
-        'url': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        'views': '1 vista • Reciente',
-        'type': 'video'
-    },
-    {
-        'id': 2,
-        'title': 'Lanzamiento oficial de BK 🚀',
-        'url': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-        'views': '12.4k vistas',
-        'type': 'video'
-    },
-    {
-        'id': 3,
-        'title': '🔴 DJ Set Space en vivo',
-        'url': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+im/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         'views': '2.1k espectando',
         'type': 'live'
     }
