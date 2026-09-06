@@ -4,37 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BK - {{ title }}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #f8f9fa; color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; padding: 15px; }
-        .auth-container { width: 100%; max-width: 360px; background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; border: 1.5px solid #eee; }
-        .auth-logo { font-weight: 900; font-size: 28px; border: 2.5px solid #000; padding: 2px 12px; border-radius: 10px; display: inline-block; margin-bottom: 15px; letter-spacing: 1px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; outline: none; }
-        .btn-main { background: #00B4D8; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; font-size: 14px; }
-        .flash-msg { background: #ffe3e3; color: #c92a2a; padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
-        .switch-link { margin-top: 15px; font-size: 13px; color: #666; }
-        .switch-link a { color: #00B4D8; text-decoration: none; font-weight: bold; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="auth-container">
-        <div class="auth-logo">BK</div>
-        <h3>{{ title }}</h3>
+<body class="bg-slate-50 flex items-center justify-center h-screen p-4">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 w-full max-w-sm text-center">
+        <div class="font-extrabold text-2xl border-2 border-black inline-block px-3 py-1 rounded-lg mb-4">BK</div>
+        <h3 class="font-bold text-lg mb-4">{{ title }}</h3>
+        
         {% with messages = get_flashed_messages() %}
           {% if messages %}
-            <div class="flash-msg">{{ messages[0] }}</div>
+            <div class="bg-red-100 text-red-600 p-2 rounded-lg text-xs font-bold mb-3">{{ messages[0] }}</div>
           {% endif %}
         {% endwith %}
-        <form method="POST">
-            <input type="text" name="username" placeholder="Nombre de usuario" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
-            <button type="submit" class="btn-main">{{ btn_text }}</button>
+
+        <form method="POST" class="flex flex-col gap-3">
+            <input type="text" name="username" placeholder="Nombre de usuario" class="p-2.5 border rounded-lg text-sm outline-none" required>
+            <input type="password" name="password" placeholder="Contraseña" class="p-2.5 border rounded-lg text-sm outline-none" required>
+            <button type="submit" class="bg-cyan-500 text-white py-2.5 rounded-lg font-bold text-sm">{{ 'Entrar' if is_login else 'Registrarse' }}</button>
         </form>
-        <div class="switch-link">
+
+        <div class="mt-5 text-xs text-slate-500">
             {% if is_login %}
-                ¿No tienes cuenta? <a href="/register">Regístrate</a>
+                ¿No tienes cuenta? <a href="/register" class="text-cyan-500 font-bold">Regístrate</a>
             {% else %}
-                ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+                ¿Ya tienes cuenta? <a href="/login" class="text-cyan-500 font-bold">Inicia sesión</a>
             {% endif %}
         </div>
     </div>
