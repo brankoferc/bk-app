@@ -616,13 +616,4 @@ def api_comment():
     c = Comment(text=data['text'], user_id=current_user.id, video_id=data['video_id'])
     db.session.add(c)
     db.session.commit()
-    return jsonify({'status': 'success'})
-
-@app.route("/api/comments/<int:video_id>")
-@login_required
-def api_get_comments(video_id):
-    comments = Comment.query.filter_by(video_id=video_id).order_by(Comment.id.desc()).all()
-    return jsonify([{'username': c.author.username, 'text': c.text} for c in comments])
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    return jsonify({'status': 'success
