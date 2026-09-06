@@ -15,7 +15,14 @@ HTML_CODE = """
         
         /* Header */
         header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #eee; margin-bottom: 15px; }
-        .logo { font-weight: 900; font-size: 22px; border: 2.5px solid #000; padding: 2px 10px; border-radius: 8px; letter-spacing: 1px; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .logo { font-weight: 900; font-size: 22px; border: 2.5px solid #000; padding: 2px 10px; border-radius: 8px; letter-spacing: 1px; cursor: pointer; }
+        
+        /* Navegación superior (Perfil y Suscripciones) */
+        .nav-links { display: flex; gap: 8px; }
+        .nav-tab { font-size: 13px; font-weight: 700; background: #eee; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; color: #333; transition: background 0.2s; }
+        .nav-tab:hover, .nav-tab.active { background: #00B4D8; color: #fff; }
+
         .search-btn { font-size: 20px; border: none; background: none; cursor: pointer; }
 
         /* Search Bar */
@@ -84,7 +91,13 @@ HTML_CODE = """
 <body>
 
     <header>
-        <div class="logo">BK</div>
+        <div class="header-left">
+            <div class="logo" onclick="location.reload()">BK</div>
+            <div class="nav-links">
+                <button class="nav-tab" onclick="openProfileModal()">👤 Perfil</button>
+                <button class="nav-tab" onclick="openSubsModal()">🔔 Suscripciones</button>
+            </div>
+        </div>
         <button class="search-btn" onclick="toggleSearchBar()">🔍</button>
     </header>
 
@@ -100,6 +113,28 @@ HTML_CODE = """
     <div class="carousel" id="liveCarousel"></div>
 
     <button class="fab" onclick="openUploadModal()">+</button>
+
+    <!-- Modal Perfil -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
+            <h3>Mi Perfil BK</h3>
+            <p style="color: #666; font-size: 13px; margin: 8px 0;">@usuario_activo</p>
+            <p style="font-size: 12px; color: #444; margin-bottom: 15px;">Creador de contenido y amante del streaming en vivo.</p>
+            <button class="btn-close" onclick="closeProfileModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal Suscripciones -->
+    <div id="subsModal" class="modal">
+        <div class="modal-content">
+            <h3>Suscripciones 🔔</h3>
+            <p style="color: #666; font-size: 13px; margin: 8px 0;">Canales que sigues:</p>
+            <div style="background: #f1f3f5; padding: 10px; border-radius: 8px; margin: 6px 0; font-size: 13px; font-weight: bold;">@oficial_bk (Activo)</div>
+            <div style="background: #f1f3f5; padding: 10px; border-radius: 8px; margin: 6px 0; font-size: 13px; font-weight: bold;">@dj_space (En vivo 🔴)</div>
+            <button class="btn-close" onclick="closeSubsModal()">Cerrar</button>
+        </div>
+    </div>
 
     <!-- Modal Reproductor -->
     <div id="playerModal" class="modal">
@@ -175,7 +210,6 @@ HTML_CODE = """
                     var badgeType = item.isLive ? 'LIVE' : 'VIDEO';
                     var badgeClass = item.isLive ? 'badge live' : 'badge';
                     
-                    // Carga el primer frame real del video del usuario
                     var mediaElement = '<video class="card-bg" src="' + item.url + '#t=0.1" preload="metadata" muted playsinline></video>';
 
                     card.innerHTML = 
@@ -310,6 +344,13 @@ HTML_CODE = """
 
         function shareVideo() { alert("¡Enlace copiado!"); }
         function focusComment() { document.getElementById('cInput').focus(); }
+        
+        /* Funciones de Modales Perfil y Suscripciones */
+        function openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; }
+        function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+        function openSubsModal() { document.getElementById('subsModal').style.display = 'flex'; }
+        function closeSubsModal() { document.getElementById('subsModal').style.display = 'none'; }
+
         function openUploadModal() { document.getElementById('uploadModal').style.display = 'flex'; }
         function closeUploadModal() { document.getElementById('uploadModal').style.display = 'none'; }
 
