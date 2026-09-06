@@ -10,63 +10,132 @@
         body { background-color: #f8fafc; color: #0f172a; font-family: sans-serif; }
         .card-border-blue { border: 2px solid #06b6d4; }
         .card-border-red { border: 2px solid #ef4444; }
+        .video-card { background-color: #000; border-radius: 1rem; position: relative; overflow: hidden; aspect-ratio: 3/4; display: flex; flex-direction: column; justify-content: space-between; padding: 0.75rem; color: white; cursor: pointer; }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto">
+<body class="p-4 max-w-md mx-auto relative min-h-screen pb-24">
 
-    <!-- Header -->
+    <!-- Header con Perfil y Lupa -->
     <div class="flex justify-between items-center mb-6">
-        <div class="border-2 border-black rounded-xl px-4 py-1 font-bold text-xl">BK</div>
-        <button class="text-gray-500 text-xl"><i class="fas fa-search"></i></button>
+        <div class="flex items-center gap-2">
+            <div class="border-2 border-black font-extrabold text-xl px-3 py-1 rounded-xl cursor-pointer" onclick="location.href='/'">BK</div>
+            <button onclick="toggleModal('profileModal')" class="text-slate-600 text-xs font-bold bg-slate-200 px-2 py-1.5 rounded-lg border border-slate-300">👤 @{{ current_user.username }}</button>
+        </div>
+        <button onclick="toggleSearch()" class="text-slate-700 text-xl p-2"><i class="fas fa-search"></i></button>
+    </div>
+
+    <!-- Buscador Oculto -->
+    <div id="searchContainer" class="hidden mb-6 bg-white p-2 rounded-xl border-2 border-cyan-500 shadow-sm">
+        <form action="/" method="GET" class="flex gap-2 w-full">
+            <input type="text" name="q" placeholder="Buscar videos..." class="w-full outline-none text-sm px-2" value="{{ request.args.get('q', '') }}">
+            <button type="submit" class="text-cyan-500 font-bold px-2"><i class="fas fa-search"></i></button>
+        </form>
     </div>
 
     <!-- Sección Videos -->
-    <h2 class="text-2xl font-bold mb-4">videos -</h2>
-    <div class="grid grid-cols-2 gap-4 mb-8">
-        
-        <!-- Tarjeta 1 -->
-        <div class="bg-black text-white rounded-2xl p-3 relative card-border-blue flex flex-col justify-between h-48">
-            <span class="bg-cyan-500 text-xs font-bold px-2 py-0.5 rounded-md w-max text-white">VIDEO</span>
-            <div>
-                <p class="font-bold text-sm">Video Nuevo</p>
-                <p class="text-xs text-gray-400">1 vista • Reciente</p>
+    <h2 class="text-2xl font-bold mb-3">videos -</h2>
+    <div class="grid grid-cols-2 gap-3 mb-6">
+        {% for video in videos %}
+            {% if video.vtype == 'video' %}
+            <div onclick="playVideo('{{ video.url }}', '{{ video.title }}', '{{ video.author.username }}')" class="video-card card-border-blue">
+                <div>
+                    <span class="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">VIDEO</span>
+                </div>
+                <div>
+                    <p class="font-bold text-sm leading-tight mb-1">{{ video.title }}</p>
+                    <p class="text-[11px] text-gray-400">@{{ video.author.username }}</p>
+                </div>
             </div>
-        </div>
-
-        <!-- Tarjeta 2 -->
-        <div class="bg-black text-white rounded-2xl p-3 relative card-border-blue flex flex-col justify-between h-48">
-            <span class="bg-cyan-500 text-xs font-bold px-2 py-0.5 rounded-md w-max text-white">VIDEO</span>
-            <div>
-                <p class="font-bold text-sm">Lanzamiento oficial de BK 🚀</p>
-                <p class="text-xs text-gray-400">12.4k vistas</p>
-            </div>
-        </div>
-
+            {% endif %}
+        {% endfor %}
     </div>
 
     <!-- Sección Lives -->
-    <h2 class="text-2xl font-bold mb-4">Lives -</h2>
-    <div class="grid grid-cols-2 gap-4 mb-20">
-        
-        <!-- Live Tarjeta -->
-        <div class="bg-black text-white rounded-2xl p-3 relative card-border-red flex flex-col justify-between h-56">
-            <span class="bg-red-500 text-xs font-bold px-2 py-0.5 rounded-md w-max text-white flex items-center gap-1">
-                <span class="w-2 h-2 bg-white rounded-full"></span> LIVE
-            </span>
-            <div>
-                <p class="font-bold text-sm">🔴 DJ Set Space en vivo</p>
-                <p class="text-xs text-gray-400">2.1k espectando</p>
+    <h2 class="text-2xl font-bold mb-3">Lives -</h2>
+    <div class="grid grid-cols-2 gap-3">
+        {% for video in videos %}
+            {% if video.vtype == 'live' %}
+            <div onclick="playVideo('{{ video.url }}', '{{ video.title }}', '{{ video.author.username }}')" class="video-card card-border-red">
+                <div>
+                    <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 w-max">
+                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> LIVE
+                    </span>
+                </div>
+                <div>
+                    <p class="font-bold text-sm leading-tight mb-1">🔴 {{ video.title }}</p>
+                    <p class="text-[11px] text-gray-400">@{{ video.author.username }}</p>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Botón flotante -->
+    <button onclick="toggleModal('uploadModal')" class="fixed bottom-6 right-6 w-14 h-14 bg-cyan-400 rounded-full flex items-center justify-center text-white text-2xl shadow-lg font-bold z-40">+</button>
+
+    <!-- Modal Perfil -->
+    <div id="profileModal" class="fixed inset-0 bg-black/60 hidden z-50 flex justify-center items-center p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-xl">
+            <div class="text-5xl mb-3">👤</div>
+            <h3 class="font-bold text-xl">@{{ current_user.username }}</h3>
+            <p class="text-sm text-slate-500 mb-5">{{ current_user.bio }}</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="toggleModal('profileModal')" class="w-full py-2.5 bg-slate-200 rounded-lg text-sm font-bold">Volver</button>
+                <a href="/logout" class="w-full py-2.5 bg-red-500 text-white rounded-lg text-sm font-bold block text-center">Cerrar Sesión</a>
             </div>
         </div>
-
     </div>
 
-    <!-- Botón Flotante Plus -->
-    <div class="fixed bottom-6 right-6">
-        <button class="bg-cyan-400 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-lg">
-            +
-        </button>
+    <!-- Modal Reproductor -->
+    <div id="playerModal" class="fixed inset-0 bg-black/90 hidden z-50 flex-col justify-center items-center p-4">
+        <button onclick="closePlayer()" class="absolute top-5 right-5 text-white text-2xl"><i class="fas fa-times"></i></button>
+        <h3 id="videoTitle" class="text-white font-bold mb-1 text-center"></h3>
+        <p id="videoAuthor" class="text-cyan-400 text-xs font-bold mb-4 text-center"></p>
+        <video id="videoPlayer" class="w-full max-w-md rounded-xl" controls autoplay playsinline></video>
     </div>
 
+    <!-- Modal Subir -->
+    <div id="uploadModal" class="fixed inset-0 bg-black/60 hidden z-50 flex justify-center items-center p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-xl">
+            <h3 class="font-bold text-lg mb-4">Añadir Nuevo Video</h3>
+            <form action="/add" method="POST" class="flex flex-col gap-3">
+                <input type="text" name="title" placeholder="Título del video" class="border p-2 rounded-lg text-sm outline-none" required>
+                <input type="url" name="url" placeholder="URL del video (.mp4)" class="border p-2 rounded-lg text-sm outline-none" required>
+                <select name="type" class="border p-2 rounded-lg text-sm outline-none">
+                    <option value="video">Video normal</option>
+                    <option value="live">Live / En vivo</option>
+                </select>
+                <div class="flex gap-2 mt-2">
+                    <button type="button" onclick="toggleModal('uploadModal')" class="w-1/2 py-2 border rounded-lg text-sm font-bold">Cancelar</button>
+                    <button type="submit" class="w-1/2 py-2 bg-cyan-500 text-white rounded-lg text-sm font-bold">Subir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+        function toggleSearch() {
+            const search = document.getElementById('searchContainer');
+            search.classList.toggle('hidden');
+        }
+        function playVideo(url, title, author) {
+            document.getElementById('videoTitle').innerText = title;
+            document.getElementById('videoAuthor').innerText = '@' + author;
+            const player = document.getElementById('videoPlayer');
+            player.src = url;
+            toggleModal('playerModal');
+        }
+        function closePlayer() {
+            const player = document.getElementById('videoPlayer');
+            player.pause();
+            player.src = '';
+            toggleModal('playerModal');
+        }
+    </script>
 </body>
 </html>
