@@ -1,6 +1,33 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'bk_secret_key_super_segura_2026'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bk_database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# Modelo de Base de Datos para Usuarios
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    bio = db.Column(db.String(200), default="Creador de contenido en BK.")
+    avatar = db.Column(db.String(200), default="")
+
+@login_manager.user_loader
+v = lambda user_id: User.get(user_id) if hasattr(User, 'get') else db.session.get(User, int(user_id))
+login_manager.user_loader(v)
+
+with app.app_context():
+    db.create_all()
 
 HTML_CODE = """
 <!DOCTYPE html>
@@ -8,7 +35,7 @@ HTML_CODE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BK</title>
+    <title>BK - Red Social</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: #f8f9fa; color: #111; padding: 15px; padding-bottom: 80px; }
@@ -18,10 +45,11 @@ HTML_CODE = """
         .header-left { display: flex; align-items: center; gap: 10px; }
         .logo { font-weight: 900; font-size: 22px; border: 2.5px solid #000; padding: 2px 10px; border-radius: 8px; letter-spacing: 1px; cursor: pointer; }
         
-        /* Navegación superior (Perfil y Suscripciones) */
-        .nav-links { display: flex; gap: 8px; }
-        .nav-tab { font-size: 13px; font-weight: 700; background: #eee; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; color: #333; transition: background 0.2s; }
+        /* Navegación superior */
+        .nav-links { display: flex; gap: 8px; align-items: center; }
+        .nav-tab { font-size: 13px; font-weight: 700; background: #eee; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; color: #333; text-decoration: none; transition: background 0.2s; display: inline-block; }
         .nav-tab:hover, .nav-tab.active { background: #00B4D8; color: #fff; }
+        .btn-logout { background: #ff4b4b; color: #fff; }
 
         .search-btn { font-size: 20px; border: none; background: none; cursor: pointer; }
 
@@ -86,16 +114,22 @@ HTML_CODE = """
         input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
         .btn-main { background: #00B4D8; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; }
         .btn-close { background: #eee; color: #333; border: none; padding: 10px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 12px; cursor: pointer; }
+        
+        /* Auth Screen styles */
+        .auth-container { max-width: 380px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+        .auth-logo { font-weight: 900; font-size: 32px; border: 3px solid #000; padding: 2px 15px; border-radius: 12px; display: inline-block; margin-bottom: 15px; }
+        .flash-msg { background: #ffdddd; color: #d8000c; padding: 8px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-left">
-            <div class="logo" onclick="location.reload()">BK</div>
+            <div class="logo" onclick="location.href='/'">BK</div>
             <div class="nav-links">
                 <button class="nav-tab" onclick="openProfileModal()">👤 Perfil</button>
                 <button class="nav-tab" onclick="openSubsModal()">🔔 Suscripciones</button>
+                <a href="/logout" class="nav-tab btn-logout">Salir</a>
             </div>
         </div>
         <button class="search-btn" onclick="toggleSearchBar()">🔍</button>
@@ -114,26 +148,23 @@ HTML_CODE = """
 
     <button class="fab" onclick="openUploadModal()">+</button>
 
-    <!-- Modal Perfil Actualizado -->
+    <!-- Modal Perfil Privado del Usuario Actual -->
     <div id="profileModal" class="modal">
         <div class="modal-content" style="text-align: center;">
             <div style="margin-bottom: 10px;">
-                <img id="profileAvatar" src="" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; display: none; margin: 0 auto 8px auto; border: 2px solid #00B4D8;" alt="Avatar">
                 <div id="profileAvatarEmoji" style="font-size: 50px; margin-bottom: 5px;">👤</div>
             </div>
-            <h3 id="displayUsername" style="font-size: 16px;">@usuario_activo</h3>
-            <p id="displayBio" style="color: #666; font-size: 12px; margin: 4px 0 12px 0;">Creador de contenido y amante del streaming en vivo.</p>
+            <h3 style="font-size: 16px;">@{{ current_user.username }}</h3>
+            <p style="color: #666; font-size: 12px; margin: 4px 0 12px 0;">{{ current_user.bio }}</p>
             
             <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;">
             
-            <div style="text-align: left; font-size: 12px; font-weight: bold; color: #444; margin-bottom: 4px;">Editar Perfil:</div>
-            <input type="text" id="inputUsername" placeholder="Nuevo @usuario" value="@usuario_activo">
-            <textarea id="inputBio" placeholder="Escribe tu nueva descripción..." rows="2" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; resize: none;">Creador de contenido y amante del streaming en vivo.</textarea>
-            
-            <div style="text-align: left; font-size: 11px; color: #666; margin-top: 6px;">Foto de perfil:</div>
-            <input type="file" id="inputAvatarFile" accept="image/*" style="font-size: 12px; padding: 4px;">
-
-            <button class="btn-main" onclick="saveProfile()">Guardar Cambios</button>
+            <form action="/update_profile" method="POST" style="text-align: left;">
+                <div style="font-size: 12px; font-weight: bold; color: #444; margin-bottom: 4px;">Editar mi Perfil:</div>
+                <input type="text" name="new_username" placeholder="Nuevo @usuario" value="{{ current_user.username }}" required>
+                <textarea name="new_bio" placeholder="Escribe tu nueva descripción..." rows="2" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; resize: none;">{{ current_user.bio }}</textarea>
+                <button type="submit" class="btn-main">Guardar Cambios</button>
+            </form>
             <button class="btn-close" onclick="closeProfileModal()">Cerrar</button>
         </div>
     </div>
@@ -186,7 +217,6 @@ HTML_CODE = """
         <div class="modal-content">
             <h3>Subir a BK 🎬</h3>
             <input type="text" id="vInputTitle" placeholder="Título del video">
-            <input type="text" id="vInputAuthor" placeholder="Tu @usuario">
             <input type="file" id="vInputFile" accept="video/*">
             <input type="text" id="vInputUrl" placeholder="O pega link MP4 https://...">
             
@@ -308,7 +338,7 @@ HTML_CODE = """
             if (input.value.trim() !== "") {
                 var item = getItemById(currentVideoId);
                 if (item) {
-                    item.comments.push('@tú: ' + input.value);
+                    item.comments.push('@{{ current_user.username }}: ' + input.value);
                     input.value = '';
                     renderComments();
                 }
@@ -358,43 +388,15 @@ HTML_CODE = """
         function shareVideo() { alert("¡Enlace copiado!"); }
         function focusComment() { document.getElementById('cInput').focus(); }
         
-        /* Funciones de Modales Perfil y Suscripciones */
         function openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; }
         function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
-        
-        function saveProfile() {
-            var newU = document.getElementById('inputUsername').value;
-            var newB = document.getElementById('inputBio').value;
-            var fileInput = document.getElementById('inputAvatarFile');
-
-            if(newU.trim() !== "") {
-                document.getElementById('displayUsername').innerText = newU;
-            }
-            if(newB.trim() !== "") {
-                document.getElementById('displayBio').innerText = newB;
-            }
-
-            if(fileInput.files && fileInput.files[0]) {
-                var imageUrl = URL.createObjectURL(fileInput.files[0]);
-                var avatarImg = document.getElementById('profileAvatar');
-                avatarImg.src = imageUrl;
-                avatarImg.style.display = 'block';
-                document.getElementById('profileAvatarEmoji').style.display = 'none';
-            }
-
-            alert("¡Perfil actualizado con éxito!");
-            closeProfileModal();
-        }
-
         function openSubsModal() { document.getElementById('subsModal').style.display = 'flex'; }
         function closeSubsModal() { document.getElementById('subsModal').style.display = 'none'; }
-
         function openUploadModal() { document.getElementById('uploadModal').style.display = 'flex'; }
         function closeUploadModal() { document.getElementById('uploadModal').style.display = 'none'; }
 
         function addVideo() {
             var titleVal = document.getElementById('vInputTitle').value || "Video Nuevo";
-            var authorVal = document.getElementById('vInputAuthor').value || "@usuario";
             var fileInput = document.getElementById('vInputFile');
             var urlInput = document.getElementById('vInputUrl').value;
             
@@ -410,7 +412,7 @@ HTML_CODE = """
             videosData.unshift({
                 id: newId,
                 title: titleVal,
-                author: authorVal,
+                author: '@{{ current_user.username }}',
                 url: videoUrl,
                 views: '1 vista • Reciente',
                 likes: 0,
@@ -430,9 +432,118 @@ HTML_CODE = """
 </html>
 """
 
+AUTH_HTML = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BK - {{ title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #f8f9fa; color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; padding: 15px; }
+        .auth-container { width: 100%; max-width: 360px; background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; border: 1.5px solid #eee; }
+        .auth-logo { font-weight: 900; font-size: 28px; border: 2.5px solid #000; padding: 2px 12px; border-radius: 10px; display: inline-block; margin-bottom: 15px; letter-spacing: 1px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; outline: none; }
+        input:focus { border-color: #00B4D8; }
+        .btn-main { background: #00B4D8; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; font-size: 14px; }
+        .flash-msg { background: #ffe3e3; color: #c92a2a; padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
+        .switch-link { margin-top: 15px; font-size: 13px; color: #666; }
+        .switch-link a { color: #00B4D8; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-logo">BK</div>
+        <h3>{{ title }}</h3>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-msg">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="text" name="username" placeholder="Nombre de usuario" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <button type="submit" class="btn-main">{{ btn_text }}</button>
+        </form>
+
+        <div class="switch-link">
+            {% if is_login %}
+                ¿No tienes cuenta? <a href="/register">Regístrate</a>
+            {% else %}
+                ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+"""
+
 @app.route("/")
+@login_required
 def home():
     return render_template_string(HTML_CODE)
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for('home'))
+        else:
+            flash('Usuario o contraseña incorrectos.')
+    return render_template_string(AUTH_HTML, title="Iniciar Sesión", btn_text="Entrar", is_login=True)
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user_exists = User.query.filter_by(username=username).first()
+        if user_exists:
+            flash('El nombre de usuario ya está en uso.')
+        else:
+            hashed_password = generate_password_hash(password, method='scrypt')
+            new_user = User(username=username, password=hashed_password)
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user)
+            return redirect(url_for('home'))
+            
+    return render_template_string(AUTH_HTML, title="Regístrate", btn_text="Crear Cuenta", is_login=False)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+@app.route("/update_profile", methods=['POST'])
+@login_required
+def update_profile():
+    new_username = request.form.get('new_username')
+    new_bio = request.form.get('new_bio')
+    
+    if new_username:
+        # Verificar si otro usuario ya tiene ese nombre
+        existing = User.query.filter_by(username=new_username).first()
+        if existing and existing.id != current_user.id:
+            flash('Ese nombre de usuario ya está ocupado.')
+        else:
+            current_user.username = new_username
+            
+    if new_bio:
+        current_user.bio = new_bio
+        
+    db.session.commit()
+    return redirect(url_for('home'))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
