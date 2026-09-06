@@ -23,8 +23,8 @@ class User(UserMixin, db.Model):
     avatar = db.Column(db.String(200), default="")
 
 @login_manager.user_loader
-v = lambda user_id: User.get(user_id) if hasattr(User, 'get') else db.session.get(User, int(user_id))
-login_manager.user_loader(v)
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
 
 with app.app_context():
     db.create_all()
@@ -114,11 +114,6 @@ HTML_CODE = """
         input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
         .btn-main { background: #00B4D8; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; }
         .btn-close { background: #eee; color: #333; border: none; padding: 10px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 12px; cursor: pointer; }
-        
-        /* Auth Screen styles */
-        .auth-container { max-width: 380px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
-        .auth-logo { font-weight: 900; font-size: 32px; border: 3px solid #000; padding: 2px 15px; border-radius: 12px; display: inline-block; margin-bottom: 15px; }
-        .flash-msg { background: #ffdddd; color: #d8000c; padding: 8px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -151,9 +146,7 @@ HTML_CODE = """
     <!-- Modal Perfil Privado del Usuario Actual -->
     <div id="profileModal" class="modal">
         <div class="modal-content" style="text-align: center;">
-            <div style="margin-bottom: 10px;">
-                <div id="profileAvatarEmoji" style="font-size: 50px; margin-bottom: 5px;">👤</div>
-            </div>
+            <div style="font-size: 50px; margin-bottom: 5px;">👤</div>
             <h3 style="font-size: 16px;">@{{ current_user.username }}</h3>
             <p style="color: #666; font-size: 12px; margin: 4px 0 12px 0;">{{ current_user.bio }}</p>
             
@@ -532,7 +525,6 @@ def update_profile():
     new_bio = request.form.get('new_bio')
     
     if new_username:
-        # Verificar si otro usuario ya tiene ese nombre
         existing = User.query.filter_by(username=new_username).first()
         if existing and existing.id != current_user.id:
             flash('Ese nombre de usuario ya está ocupado.')
