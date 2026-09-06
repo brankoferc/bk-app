@@ -83,7 +83,7 @@ HTML_CODE = """
         .comment-input-box input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 12px; }
         .comment-input-box button { background: #00B4D8; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
         .btn-main { background: #00B4D8; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; }
         .btn-close { background: #eee; color: #333; border: none; padding: 10px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 12px; cursor: pointer; }
     </style>
@@ -114,13 +114,26 @@ HTML_CODE = """
 
     <button class="fab" onclick="openUploadModal()">+</button>
 
-    <!-- Modal Perfil -->
+    <!-- Modal Perfil Actualizado -->
     <div id="profileModal" class="modal">
         <div class="modal-content" style="text-align: center;">
-            <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
-            <h3>Mi Perfil BK</h3>
-            <p style="color: #666; font-size: 13px; margin: 8px 0;">@usuario_activo</p>
-            <p style="font-size: 12px; color: #444; margin-bottom: 15px;">Creador de contenido y amante del streaming en vivo.</p>
+            <div style="margin-bottom: 10px;">
+                <img id="profileAvatar" src="" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; display: none; margin: 0 auto 8px auto; border: 2px solid #00B4D8;" alt="Avatar">
+                <div id="profileAvatarEmoji" style="font-size: 50px; margin-bottom: 5px;">👤</div>
+            </div>
+            <h3 id="displayUsername" style="font-size: 16px;">@usuario_activo</h3>
+            <p id="displayBio" style="color: #666; font-size: 12px; margin: 4px 0 12px 0;">Creador de contenido y amante del streaming en vivo.</p>
+            
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;">
+            
+            <div style="text-align: left; font-size: 12px; font-weight: bold; color: #444; margin-bottom: 4px;">Editar Perfil:</div>
+            <input type="text" id="inputUsername" placeholder="Nuevo @usuario" value="@usuario_activo">
+            <textarea id="inputBio" placeholder="Escribe tu nueva descripción..." rows="2" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; resize: none;">Creador de contenido y amante del streaming en vivo.</textarea>
+            
+            <div style="text-align: left; font-size: 11px; color: #666; margin-top: 6px;">Foto de perfil:</div>
+            <input type="file" id="inputAvatarFile" accept="image/*" style="font-size: 12px; padding: 4px;">
+
+            <button class="btn-main" onclick="saveProfile()">Guardar Cambios</button>
             <button class="btn-close" onclick="closeProfileModal()">Cerrar</button>
         </div>
     </div>
@@ -348,6 +361,31 @@ HTML_CODE = """
         /* Funciones de Modales Perfil y Suscripciones */
         function openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; }
         function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+        
+        function saveProfile() {
+            var newU = document.getElementById('inputUsername').value;
+            var newB = document.getElementById('inputBio').value;
+            var fileInput = document.getElementById('inputAvatarFile');
+
+            if(newU.trim() !== "") {
+                document.getElementById('displayUsername').innerText = newU;
+            }
+            if(newB.trim() !== "") {
+                document.getElementById('displayBio').innerText = newB;
+            }
+
+            if(fileInput.files && fileInput.files[0]) {
+                var imageUrl = URL.createObjectURL(fileInput.files[0]);
+                var avatarImg = document.getElementById('profileAvatar');
+                avatarImg.src = imageUrl;
+                avatarImg.style.display = 'block';
+                document.getElementById('profileAvatarEmoji').style.display = 'none';
+            }
+
+            alert("¡Perfil actualizado con éxito!");
+            closeProfileModal();
+        }
+
         function openSubsModal() { document.getElementById('subsModal').style.display = 'flex'; }
         function closeSubsModal() { document.getElementById('subsModal').style.display = 'none'; }
 
